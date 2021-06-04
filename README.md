@@ -7,6 +7,8 @@ Peak observed performance for the 2-layer architecture was a correct prediction 
 
 The 5-layer architecture is still being tested, with the peak observed performance so far being a correct prediction rate of about 45%.
 
+The recommendation functionality (in recommend.py) is not currently connected.
+
 For both architectures, there is somewhat of an overfitting issue; if you mean to replicate this experiment, I recommend using longer audio clips or multiple mel spectrograms to generate a label.
 
 
