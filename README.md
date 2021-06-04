@@ -9,9 +9,16 @@ The 5-layer architecture is still being tested, with the peak observed performan
 
 For both architectures, there is somewhat of an overfitting issue; if you mean to replicate this experiment, I recommend using longer audio clips or multiple mel spectrograms to generate a label.
 
+
+
 References: 
+
 towardsdatascience.com/musical-genre-classification-with-convolutional-neural-networks-ff04f9601a74
+
 github.com/keunwoochoi/music-auto_tagging-keras
+
 github.com/eeveeking/351
+
 github.com/yangdanny97/genre_classification
+
 github.com/jsalbert/Music-Genre-Classification-with-Deep-Learning
