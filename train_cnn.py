@@ -3,7 +3,6 @@ import os
 import time
 import h5py
 import sys
-#from tagger_net import MusicTaggerCRNN
 from keras.optimizers import SGD
 import numpy as np
 from keras.utils import np_utils
@@ -21,17 +20,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # Toggles
 TRAIN = 1
 TEST = 0
-
-SAVE_MODEL = 0
-SAVE_WEIGHTS = 0
-
-LOAD_MODEL = 0
-LOAD_WEIGHTS = 0
-
-# Dataset
-MULTIFRAMES = 0
-SAVE_DB = 0
-LOAD_DB = 0
 
 # Model parameters
 n_classes = 10
@@ -61,26 +49,15 @@ y_train = np_utils.to_categorical(y_train, n_classes)
 y_test = np_utils.to_categorical(y_test, n_classes)
 
 # Initialize model
-model = MusicGenre_CNN(weights=None, input_tensor=(128, 647, 1))
+model = MusicGenre_CNN(input_tensor=(128, 647, 1))
 
 model.compile(loss='categorical_crossentropy',
               optimizer='adam',
               metrics=['accuracy'])
 
-if LOAD_WEIGHTS:
-    model.load_weights(weights_path+model_name+'_epoch_40.h5')
-
 # Print summary of the model
 model.summary()
 
-# Save model architecture
-'''
-if SAVE_MODEL:
-    json_string = model.to_json()
-    f = open(model_path+model_name+".json", 'w')
-    f.write(json_string)
-    f.close()
-'''
 
 # Train model
 if TRAIN:
@@ -91,18 +68,9 @@ if TRAIN:
     f_scores = open(model_path+"scores.txt", 'w')
     for epoch in range(1,n_epochs+1):
         t0 = time.time()
-        # y_train = np_utils.to_categorical(y_train)
-        # y_test = np_utils.to_categorical(y_test)
         print ("Number of epoch: " +str(epoch)+"/"+str(n_epochs))
         sys.stdout.flush()
-        #print("shape of x_train: "+str(x_train.shape)+", shape of y_train: "+str(y_train.shape))
-        #print("shape of x_test: "+str(x_test.shape)+", shape of y_test: "+str(y_test.shape))
-        #print("batch size: "+str(batch_size))
-        #print("fitting now...")
-        #print(y_test)
         scores = model.fit(x=x_train, y=y_train, batch_size=batch_size, verbose=1, validation_data=(x_test, y_test))
-        #print("scores: )
-        #print("model fitted")
         time_elapsed = time_elapsed + time.time() - t0
         print ("Time Elapsed: " +str(time_elapsed))
         sys.stdout.flush()
@@ -119,10 +87,6 @@ if TRAIN:
 
         f_scores.write(str(score_train[0])+","+str(score_train[1])+","+str(score_test[0])+","+str(score_test[1]) + "\n")
 
-        if SAVE_WEIGHTS and epoch % 5 == 0:
-            model.save_weights(weights_path+ "epoch_" + str(epoch) + ".h5")
-            print("Saved model to disk in: " + weights_path + model_name + "_epoch" + str(epoch) + ".h5")
-
     f_train.close()
     f_test.close()
     f_scores.close()
@@ -132,41 +96,14 @@ if TRAIN:
     f.write(str(time_elapsed))
     f.close()
 
-    if SAVE_MODEL:
-        json_string = model.to_json()
-        f = open(model_path+".json", 'w')
-        f.write(json_string)
-        f.close()
-
-    '''
-    # Save files when an sudden close happens / ctrl C
-    except:
-        f_train.close()
-        f_test.close()
-        f_scores.close()
-        # Save time elapsed
-        f = open(model_path+ "time_elapsed.txt", 'w')
-        f.write(str(time_elapsed))
-        f.close()
-    finally:
-        f_train.close()
-        f_test.close()
-        f_scores.close()
-        # Save time elapsed
-        f = open(model_path+ "time_elapsed.txt", 'w')
-        f.write(str(time_elapsed))
-        f.close()
-    '''
-
+    
 if TEST:
     t0 = time.time()
     print('Predicting...','\n')
 
-    #real_labels_mean = load_gt(test_gt_list)
     real_labels = y_test
 
     results = np.zeros((x_test.shape[0], tags.shape[0]))
-    #predicted_labels_mean = np.zeros((num_frames_test.shape[0], 1))
     means = np.zeros((y_test.shape[0], 1))
 
     n = 0
@@ -175,20 +112,14 @@ if TEST:
     for i in range(0, n_test):
         clause = x_test[i,:,:,:]
         clause = clause[np.newaxis,:,:,:]
-        #print("Dimensions of array being tested: "+str(clause.shape))
         results[i] = model.predict(clause, batch_size=None)
-        #weights=None, input_tensor=clause,
-        #results[i] = model(clause, training=False)
         n = n + 1
 
         prediction_tensor = results[i]
         if i < 5:
             print("Resulting label (tensor):" + str(prediction_tensor))
-        # = tags[predicted_label]
-        mean = prediction_tensor#.mean(0)
-        #print("mean: "+str(mean))
+        mean = prediction_tensor
         sort_result(tags, mean.tolist())
-        #print("mean (sorted): "+str(mean))
         final = predict_label(mean)
         means[i] = final
         prediction_array = prediction_tensor
@@ -196,12 +127,9 @@ if TEST:
         print("final: "+str(final))
         print("real_labels[i]: "+str(real_labels[i]))
         real_label = get_label(real_labels[i], 0)
-        #print("final: "+str(final))
-        #print("Predicted Genre: "+str(genre))
 
         if final != real_label:
             incorrect = incorrect + 1
-            #print("Incorrect!")
 
     percent_correct = (n - incorrect) / n
     print("Correct Prediction Rate: "+str(percent_correct)+"%")
