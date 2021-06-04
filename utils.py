@@ -3,7 +3,6 @@ import time
 import h5py
 import sys
 import librosa
-#import audio_processor as ap #audio_processor is a file not a library
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
@@ -14,6 +13,8 @@ from operator import truediv
 def tensorify_melgram(melgram):
     tensor = melgram[np.newaxis, :, :, np.newaxis]
     return tensor
+
+
 #number of genre labels
 num_genres = 10
 genres_list = ['blues','classical','country','disco','hiphop','jazz','metal','pop','reggae','rock']
@@ -21,6 +22,7 @@ genres_list = ['blues','classical','country','disco','hiphop','jazz','metal','po
 num_songs_train = 80
 num_songs_test = 100 - num_songs_train
 channel = 1
+
 
 def generate_user_input(filepath):
     filepath = filepath
@@ -44,11 +46,11 @@ def generate_user_input(filepath):
     mel_array = np.concatenate((mel_array, tensor), axis=0)
     return (mel_array, counter)
 
+
 def generate_dataset_train():
     #generates an array of n mel spectrograms and a list of n labels, for each
     #mel spectrogram respectively
 
-    #mel_array = np.zeros((0, 1, 96, 1366), dtype=np.float32)
     mel_array = np.zeros((0,128,647,1))
     labels = []
     song_counter = 0
@@ -64,29 +66,20 @@ def generate_dataset_train():
             song = str(song_counter)
         filepath = filepath + song + '.wav'
         y, sr = librosa.load(filepath)
-        #if counter < 5:
-        #    print("y: "+str(y.shape)+", sr: "+str(sr))
         mel_spect = librosa.feature.melspectrogram(y=y, sr=22050, n_fft=2048, hop_length=1024)
         mel_spect = librosa.power_to_db(mel_spect, ref=np.max)
-        #print("mel_spect dimensions: "+str(mel_spect.shape))
         (height, width) = mel_spect.shape
         if (height == 128) and (width == 647):
             pass
         else:
-            #print("missed mel_spect: ("+str(height)+", "+str(width)+")")
-            #print(str(genre))
-            #print("width: "+str(width))
             if width > 647:
                 mel_spect = mel_spect[:,0:647]
             elif width < 647:
                 missing = 647 - width
                 new_cols = np.zeros((128,missing))
                 mel_spect = np.concatenate((mel_spect, new_cols), axis=1)
-            #print("mel_spect dimensions: "+str(mel_spect.size))
-            #missed = missed + 1
         counter = counter + 1
         tensor = tensorify_melgram(mel_spect)
-        #print("tensor dimensions: "+str(tensor.shape))
         mel_array = np.concatenate((mel_array, tensor), axis=0)
         labels.append(genre_counter)
         if song_counter < (num_songs_train - 1):
@@ -94,10 +87,9 @@ def generate_dataset_train():
         else:
             genre_counter = genre_counter + 1
             song_counter = 0
-    #print("counted: "+str(counter))
-    #print("missed: "+str(missed))
     print("mel_array size: "+str(mel_array.shape))
     return (mel_array, labels, counter)
+
 
 def generate_dataset_test():
     #generates an array of n mel spectrograms and a list of n labels, for each
@@ -123,16 +115,12 @@ def generate_dataset_test():
         if (height == 128) and (width == 647):
             pass
         else:
-            #print("missed mel_spect: ("+str(height)+", "+str(width)+")")
-            #print(str(genre))
-            #print("width: "+str(width))
             if width > 647:
                 mel_spect = mel_spect[:,0:647]
             elif width < 647:
                 missing = 647 - width
                 new_cols = np.zeros((128,missing))
                 mel_spect = np.concatenate((mel_spect, new_cols), axis=1)
-            #print("mel_spect dimensions: "+str(mel_spect.size))
         tensor = tensorify_melgram(mel_spect)
         mel_array = np.concatenate((mel_array, tensor), axis=0)
         labels.append(genre_counter)
@@ -144,6 +132,7 @@ def generate_dataset_test():
             song_counter = 99
     print("test mel_array size: "+str(mel_array.shape))
     return (mel_array, labels, counter)
+
 
 def get_label(prediction_array, toggle):
     if toggle == 0:
@@ -158,12 +147,14 @@ def get_label(prediction_array, toggle):
                 pass
         return idx
     elif toggle == 1:
+        #toggle left in to be able to use different methods of label extraction in the future
         pass
+    
 
 def save_data(data, name):
     with h5py.File(path + name, 'w') as hf:
         hf.create_dataset('data', data=data)
-
+        
 
 def load_dataset(dataset_path):
     with h5py.File(dataset_path, 'r') as hf:
@@ -180,7 +171,7 @@ def save_dataset(path, data, labels, num_frames):
         hf.create_dataset('labels', data=labels)
         hf.create_dataset('num_frames', data=num_frames)
 
-
+        
 def sort_result(tags, preds):
     result = zip(tags, preds)
     sorted_result = sorted(result, key=lambda x: x[1], reverse=True)
@@ -203,7 +194,6 @@ def load_gt(path):
             gt_total.append(int(lineTest))
         gt_total = np.array(gt_total)
         # print test_numFrames_total
-
     return gt_total
 
 
