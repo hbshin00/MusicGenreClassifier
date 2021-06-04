@@ -12,11 +12,11 @@ import numpy as np
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-# Toggles
+# TOGGLES
 # If DROPOUT = 0, dropout layers will be excluded
 # Else, if DROPOUT = X, dropout layers will be included with a rate of 0.0X
 # DROPOUT must be of type int and 0 >= DROPOUT >= 9
-# DROPOUT <= 2 is recommended
+# In general, DROPOUT <= 2 is recommended, however best observed observance so far has been with no dropout
 DROPOUT = 1
 # If ARCHITECTURE = 1, the 2-layer architecture will be used
 # If ARCHITECTURE = 2, the 5-layer architecture will be used
@@ -38,37 +38,7 @@ def pop_layer(model):
         model.built = False
 
 
-def MusicGenre_CNN(weights=None, input_tensor=None):
-    #(weights='msd', input_tensor=None)
-    '''Instantiate the MusicTaggerCNN architecture,
-    optionally loading weights pre-trained
-    on Million Song Dataset. Note that when using TensorFlow,
-    for best performance you should set
-    `image_dim_ordering="tf"` in your Keras config
-    at ~/.keras/keras.json.
-    The model and the weights are compatible with both
-    TensorFlow and Theano. The dimension ordering
-    convention used by the model is the one
-    specified in your Keras config file.
-    For preparing mel-spectrogram input, see
-    `audio_conv_utils.py` in [applications](https://github.com/fchollet/keras/tree/master/keras/applications).
-    You will need to install [Librosa](http://librosa.github.io/librosa/)
-    to use it.
-    # Arguments
-        weights: one of `None` (random initialization)
-            or "msd" (pre-training on ImageNet).
-        input_tensor: optional Keras tensor (i.e. output of `layers.Input()`)
-            to use as image input for the model.
-        include_top: whether to include the 1 fully-connected
-            layer (output layer) at the top of the network.
-            If False, the network outputs 256-dim features.
-    # Returns
-        A Keras model instance.
-    '''
-    if weights not in {'msd', None}:
-        raise ValueError('The `weights` argument should be either '
-                         '`None` (random initialization) or `msd` '
-                         '(pre-training on Million Song Dataset).')
+def MusicGenre_CNN(input_tensor=None):
 
     input_shape = (128, 647, 1)
 
@@ -136,30 +106,9 @@ def MusicGenre_CNN(weights=None, input_tensor=None):
     # Output
     x = Flatten(name='Flatten_1')(x)
 
-    if weights is None:
-        # Create model
-        x = Dense(10, activation='softmax', name='output')(x)
-        # x = Dense(1, activation='relu', name='max')(x)
-        model = Model(melgram_input, x)
+    # Create model
+    x = Dense(10, activation='softmax', name='output')(x)
+    # x = Dense(1, activation='relu', name='max')(x)
+    model = Model(melgram_input, x)
 
-        return model
-    else:
-        # Load input
-        x = Dense(50, activation='sigmoid', name='output')(x)
-        if K.image_dim_ordering() == 'tf':
-            raise RuntimeError("Please set image_dim_ordering == 'th'."
-                               "You can set it at ~/.keras/keras.json")
-        # Create model
-        initial_model = Model(melgram_input, x)
-        initial_model.load_weights('weights/music_tagger_cnn_weights_%s.h5' % K._BACKEND,
-                                   by_name=True)
-
-        # Eliminate last layer
-        pop_layer(initial_model)
-
-        # Add new Dense layer
-        last = initial_model.get_layer('Flatten_1')
-        preds = (Dense(10, activation='sigmoid', name='preds'))(last.output)
-        model = Model(initial_model.input, preds)
-
-        return model
+    return model
